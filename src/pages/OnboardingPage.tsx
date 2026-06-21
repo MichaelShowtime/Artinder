@@ -4,8 +4,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { ChevronRight, Upload, Check, X } from 'lucide-react'
 import CityInput from '../components/CityInput'
-
-const INTERESTS = ['Musik', 'Film', 'Sport', 'Gaming', 'Rejser', 'Mad', 'Fitness', 'Kunst', 'Natur', 'Bøger', 'Mode', 'Teknologi']
+import InterestPicker from '../components/InterestPicker'
 
 const LANGUAGES = [
   'Dansk', 'Engelsk', 'Arabisk', 'Tyrkisk', 'Persisk', 'Urdu', 'Hindi',
@@ -40,9 +39,6 @@ export default function OnboardingPage() {
 
   const stepIndex = steps.indexOf(step)
   const progress = ((stepIndex + 1) / steps.length) * 100
-
-  const toggleInterest = (i: string) =>
-    setInterests(prev => prev.includes(i) ? prev.filter(x => x !== i) : [...prev, i])
 
   const toggleLanguage = (lang: string) =>
     setLanguages(prev => prev.includes(lang) ? prev.filter(x => x !== lang) : [...prev, lang])
@@ -187,16 +183,11 @@ export default function OnboardingPage() {
       )}
 
       {step === 'interests' && (
-        <div className="flex-1 flex flex-col">
-          <h2 className="text-2xl font-bold mb-2">Dine interesser</h2>
-          <p className="text-gray-500 text-sm mb-6">Vælg hvad der passer dig</p>
-          <div className="flex flex-wrap gap-2">
-            {INTERESTS.map(i => (
-              <button key={i} onClick={() => toggleInterest(i)}
-                className={`px-4 py-2 rounded-full text-sm border transition-all ${interests.includes(i) ? 'bg-primary text-white border-primary' : 'border-gray-200 text-gray-700'}`}>
-                {i}
-              </button>
-            ))}
+        <div className="flex-1 flex flex-col min-h-0">
+          <h2 className="text-2xl font-bold mb-1">Dine interesser</h2>
+          <p className="text-gray-500 text-sm mb-4">Vælg op til 10</p>
+          <div className="flex-1 overflow-y-auto">
+            <InterestPicker value={interests} onChange={setInterests} max={10} />
           </div>
         </div>
       )}

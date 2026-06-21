@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext'
 import type { ProfilePrompt } from '../context/AuthContext'
 import { Camera, LogOut, Trash2, X, MapPin, Ruler, User2, Languages, ChevronRight, Plus, Check } from 'lucide-react'
 import CityInput from '../components/CityInput'
+import InterestPicker from '../components/InterestPicker'
 
 type ProfileImage = { id: string; url: string; order_index: number }
 
@@ -50,8 +51,6 @@ const LANGUAGES = [
   'Albansk', 'Bulgarsk', 'Ukrainsk', 'Amharisk', 'Swahili', 'Hebraisk',
   'Thai', 'Indonesisk', 'Malay', 'Tigrinya',
 ]
-
-const INTERESTS = ['Musik', 'Film', 'Sport', 'Gaming', 'Rejser', 'Mad', 'Fitness', 'Kunst', 'Natur', 'Bøger', 'Mode', 'Teknologi']
 
 export default function ProfilePage() {
   const { user, profile, signOut, refreshProfile } = useAuth()
@@ -132,8 +131,6 @@ export default function ProfilePage() {
     setImages(prev => prev.filter(i => i.id !== imgId))
   }
 
-  const toggleInterest = (i: string) =>
-    setInterests(prev => prev.includes(i) ? prev.filter(x => x !== i) : [...prev, i])
 
   const toggleLanguage = (lang: string) =>
     setLanguages(prev => prev.includes(lang) ? prev.filter(x => x !== lang) : [...prev, lang])
@@ -367,11 +364,7 @@ export default function ProfilePage() {
               {/* Interests */}
               <div>
                 <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-3">Interesser</p>
-                <div className="flex flex-wrap gap-2">
-                  {INTERESTS.map(i => (
-                    <button key={i} onClick={() => toggleInterest(i)} className={`px-3 py-1.5 rounded-full text-sm border transition-all ${interests.includes(i) ? 'bg-primary text-white border-primary' : 'border-gray-200 text-gray-700'}`}>{i}</button>
-                  ))}
-                </div>
+                <InterestPicker value={interests} onChange={setInterests} max={10} />
               </div>
 
               {/* Prompts */}
