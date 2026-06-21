@@ -91,8 +91,8 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white flex flex-col px-6 py-10">
-      <div className="mb-8">
+    <div className="h-screen bg-white flex flex-col overflow-hidden px-6 py-10">
+      <div className="mb-6 flex-shrink-0">
         <div className="h-1 bg-gray-100 rounded-full">
           <div className="h-1 bg-primary rounded-full transition-all" style={{ width: `${progress}%` }} />
         </div>
@@ -100,7 +100,7 @@ export default function OnboardingPage() {
       </div>
 
       {step === 'name' && (
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col overflow-y-auto">
           <h2 className="text-2xl font-bold mb-2">Hvad hedder du?</h2>
           <p className="text-gray-500 text-sm mb-6">Det vises på din profil</p>
           <input type="text" placeholder="Dit navn" value={name} onChange={e => setName(e.target.value)}
@@ -109,7 +109,7 @@ export default function OnboardingPage() {
       )}
 
       {step === 'age' && (
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col overflow-y-auto">
           <h2 className="text-2xl font-bold mb-2">Hvor gammel er du?</h2>
           <p className="text-gray-500 text-sm mb-6">Du skal være mindst 18 år</p>
           <input type="number" placeholder="Din alder" value={age} min={18} max={99} onChange={e => setAge(e.target.value)}
@@ -118,7 +118,7 @@ export default function OnboardingPage() {
       )}
 
       {step === 'height' && (
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col overflow-y-auto">
           <h2 className="text-2xl font-bold mb-2">Hvor høj er du?</h2>
           <p className="text-gray-500 text-sm mb-6">Valgfrit — kan ændres senere</p>
           <div className="relative">
@@ -130,7 +130,7 @@ export default function OnboardingPage() {
       )}
 
       {step === 'gender' && (
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col overflow-y-auto">
           <h2 className="text-2xl font-bold mb-2">Hvad er dit køn?</h2>
           <div className="space-y-3 mt-6">
             {['Mand', 'Kvinde', 'Andet'].map(g => (
@@ -144,7 +144,7 @@ export default function OnboardingPage() {
       )}
 
       {step === 'location' && (
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col overflow-y-auto">
           <h2 className="text-2xl font-bold mb-2">Hvor bor du?</h2>
           <p className="text-gray-500 text-sm mb-6">By eller område</p>
           <CityInput value={location} onChange={setLocation} />
@@ -152,7 +152,7 @@ export default function OnboardingPage() {
       )}
 
       {step === 'languages' && (
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col overflow-y-auto">
           <h2 className="text-2xl font-bold mb-2">Hvilke sprog taler du?</h2>
           <p className="text-gray-500 text-sm mb-6">Valgfrit — kan ændres senere</p>
           {languages.length > 0 ? (
@@ -173,7 +173,7 @@ export default function OnboardingPage() {
       )}
 
       {step === 'bio' && (
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col overflow-y-auto">
           <h2 className="text-2xl font-bold mb-2">Skriv lidt om dig selv</h2>
           <p className="text-gray-500 text-sm mb-6">Max 300 tegn</p>
           <textarea placeholder="Hvem er du?" value={bio} onChange={e => setBio(e.target.value)} maxLength={300} rows={4}
@@ -183,17 +183,17 @@ export default function OnboardingPage() {
       )}
 
       {step === 'interests' && (
-        <div className="flex-1 flex flex-col min-h-0">
-          <h2 className="text-2xl font-bold mb-1">Dine interesser</h2>
-          <p className="text-gray-500 text-sm mb-4">Vælg op til 10</p>
-          <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+          <h2 className="text-2xl font-bold mb-1 flex-shrink-0">Dine interesser</h2>
+          <p className="text-gray-500 text-sm mb-4 flex-shrink-0">Vælg op til 10</p>
+          <div className="flex-1 overflow-y-auto pb-2">
             <InterestPicker value={interests} onChange={setInterests} max={10} />
           </div>
         </div>
       )}
 
       {step === 'photos' && (
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col overflow-y-auto">
           <h2 className="text-2xl font-bold mb-2">Tilføj billeder</h2>
           <p className="text-gray-500 text-sm mb-6">Upload mindst ét billede af dig selv</p>
           <label className="flex flex-col items-center justify-center border-2 border-dashed border-gray-200 rounded-xl py-8 cursor-pointer">
@@ -212,7 +212,7 @@ export default function OnboardingPage() {
         </div>
       )}
 
-      <div className="mt-8">
+      <div className="mt-4 flex-shrink-0">
         {step !== 'photos' ? (
           <button
             onClick={next}
