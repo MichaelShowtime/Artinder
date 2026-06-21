@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import type { ProfilePrompt } from '../context/AuthContext'
 import { Camera, LogOut, Trash2, X, MapPin, Ruler, User2, Languages, ChevronRight, Plus, Check } from 'lucide-react'
+import CityInput from '../components/CityInput'
 
 type ProfileImage = { id: string; url: string; order_index: number }
 
@@ -331,7 +332,7 @@ export default function ProfilePage() {
                       <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-gray-400">cm</span>
                     </div>
                   </div>
-                  <input value={location} onChange={e => setLocation(e.target.value)} placeholder="By / Område" className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-primary" />
+                  <CityInput value={location} onChange={setLocation} placeholder="By / Område" />
                 </div>
               </div>
 

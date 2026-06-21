@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { ChevronRight, Upload, Check, X } from 'lucide-react'
+import CityInput from '../components/CityInput'
 
 const INTERESTS = ['Musik', 'Film', 'Sport', 'Gaming', 'Rejser', 'Mad', 'Fitness', 'Kunst', 'Natur', 'Bøger', 'Mode', 'Teknologi']
 
@@ -150,8 +151,7 @@ export default function OnboardingPage() {
         <div className="flex-1 flex flex-col">
           <h2 className="text-2xl font-bold mb-2">Hvor bor du?</h2>
           <p className="text-gray-500 text-sm mb-6">By eller område</p>
-          <input type="text" placeholder="Fx. København" value={location} onChange={e => setLocation(e.target.value)}
-            className="border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-primary" />
+          <CityInput value={location} onChange={setLocation} />
         </div>
       )}
 
