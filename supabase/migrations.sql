@@ -10,7 +10,8 @@ create table if not exists public.message_reactions (
   unique(message_id, user_id)
 );
 alter table public.message_reactions enable row level security;
-create policy if not exists "reactions_all" on public.message_reactions for all using (true) with check (true);
+drop policy if exists "reactions_all" on public.message_reactions;
+create policy "reactions_all" on public.message_reactions for all using (true) with check (true);
 
 -- 2. Track hvornår hver bruger sidst læste en match-tråd (til ulæst-badge + læsekvittering)
 create table if not exists public.match_reads (
@@ -20,7 +21,8 @@ create table if not exists public.match_reads (
   primary key (match_id, user_id)
 );
 alter table public.match_reads enable row level security;
-create policy if not exists "match_reads_all" on public.match_reads for all using (true) with check (true);
+drop policy if exists "match_reads_all" on public.match_reads;
+create policy "match_reads_all" on public.match_reads for all using (true) with check (true);
 
 -- 3. Fix chat isolation: kun match-deltagere kan se beskeder
 alter table public.messages enable row level security;
