@@ -156,8 +156,16 @@ export default function EditMoodPage() {
           <label className="text-sm font-semibold text-gray-700 mb-2 block">Tags</label>
           <div className="flex flex-wrap gap-2">
             {TAGS.map(tag => (
-              <button key={tag} onClick={() => toggleTag(tag)}
-                className={`px-3 py-1.5 rounded-full text-xs border transition-all ${tags.includes(tag) ? 'bg-primary text-white border-primary' : 'border-gray-200 text-gray-600'}`}>
+              <button
+                key={tag}
+                type="button"
+                onClick={() => toggleTag(tag)}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all border-2 ${
+                  tags.includes(tag)
+                    ? 'bg-white text-gray-900 border-gray-900'
+                    : 'bg-gray-900 text-white border-gray-900'
+                }`}
+              >
                 {tag}
               </button>
             ))}
