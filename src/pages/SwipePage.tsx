@@ -224,8 +224,8 @@ export default function SwipePage() {
         <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center mb-4">
           <Heart size={32} className="text-gray-400" />
         </div>
-        <h3 className="text-lg font-semibold text-gray-800">Ingen flere profiler</h3>
-        <p className="text-gray-500 text-sm mt-2">Du har set alle Artins moods.</p>
+        <h3 className="text-lg font-semibold text-gray-800">Ingen flere personaer</h3>
+        <p className="text-gray-500 text-sm mt-2">Du har set alle Artins personaer.</p>
         <button
           onClick={handleReset}
           className="mt-6 flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-full text-sm font-semibold"
