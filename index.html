@@ -6,26 +6,22 @@
 
     <title>Artinder</title>
 
-    <!-- PWA manifest -->
-    <link rel="manifest" href="/manifest.json" />
+    <!-- PWA manifest (genereres af vite-plugin-pwa ved build) -->
+    <link rel="manifest" href="/manifest.webmanifest" />
 
-    <!-- iOS: standalone mode (skjuler adresselinjen) -->
+    <!-- iOS standalone mode -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Artinder" />
-    <link rel="apple-touch-icon" href="/icon.svg" />
+    <link rel="apple-touch-icon" href="/icon-192.png" />
 
-    <!-- Android: tema-farve på browser-chrome -->
+    <!-- Android theme -->
     <meta name="theme-color" content="#FF4458" />
     <meta name="mobile-web-app-capable" content="yes" />
 
-    <!-- Forhindrer callout og selection på touch -->
     <style>
-      body {
-        -webkit-tap-highlight-color: transparent;
-        -webkit-touch-callout: none;
-        overscroll-behavior: none;
-      }
+      * { -webkit-tap-highlight-color: transparent; }
+      body { overscroll-behavior: none; -webkit-touch-callout: none; }
     </style>
   </head>
   <body>
