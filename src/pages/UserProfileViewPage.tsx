@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { ArrowLeft, MapPin, Ruler, User2, Languages } from 'lucide-react'
+import { INTEREST_CATEGORIES } from '../data/interests'
 
 type ProfilePrompt = { question: string; answer: string }
 
@@ -121,17 +122,28 @@ export default function UserProfileViewPage() {
           </div>
         ))}
 
-        {/* Interests */}
-        {profile.interests && profile.interests.length > 0 && (
-          <div className="bg-gray-50 rounded-2xl p-4">
-            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-3">Interesser</p>
-            <div className="flex flex-wrap gap-2">
-              {profile.interests.map(i => (
-                <span key={i} className="px-3 py-1.5 bg-white border border-gray-200 rounded-full text-xs text-gray-700">{i}</span>
+        {/* Interests grouped by category */}
+        {profile.interests && profile.interests.length > 0 && (() => {
+          const userInterests = profile.interests!
+          const categoriesWithMatches = INTEREST_CATEGORIES
+            .map(cat => ({ name: cat.name, tags: cat.tags.filter(t => userInterests.includes(t)) }))
+            .filter(cat => cat.tags.length > 0)
+          return (
+            <div className="bg-gray-50 rounded-2xl p-4 space-y-4">
+              <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Interesser</p>
+              {categoriesWithMatches.map(cat => (
+                <div key={cat.name}>
+                  <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">{cat.name}</p>
+                  <div className="flex flex-wrap gap-2">
+                    {cat.tags.map(tag => (
+                      <span key={tag} className="px-3 py-1.5 bg-white border border-gray-200 rounded-full text-xs text-gray-700">{tag}</span>
+                    ))}
+                  </div>
+                </div>
               ))}
             </div>
-          </div>
-        )}
+          )
+        })()}
 
         {/* More photos */}
         {images.length > 1 && (
