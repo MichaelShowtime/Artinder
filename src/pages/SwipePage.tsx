@@ -45,12 +45,12 @@ function ProfileSheet({ mood, onClose, onSwipe }: {
       transition={{ duration: 0.2 }}
     >
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/60" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/80" onClick={onClose} />
 
       {/* Sheet */}
       <motion.div
-        className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl overflow-hidden flex flex-col"
-        style={{ maxHeight: '92vh' }}
+        className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl flex flex-col"
+        style={{ maxHeight: '92vh', overflow: 'hidden' }}
         initial={{ y: '100%' }}
         animate={{ y: 0 }}
         exit={{ y: '100%' }}
@@ -104,7 +104,7 @@ function ProfileSheet({ mood, onClose, onSwipe }: {
             <div>
               <h2 className="text-2xl font-bold text-gray-900">{mood.name}</h2>
               {mood.tags?.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 mt-2 overflow-hidden" style={{ maxHeight: '4rem' }}>
+                <div className="flex flex-wrap gap-1.5 mt-2">
                   {mood.tags.map(tag => (
                     <span key={tag} className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium">{tag}</span>
                   ))}
