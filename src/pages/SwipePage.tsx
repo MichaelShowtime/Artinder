@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, useMotionValue, useTransform, PanInfo, AnimatePresence } from 'framer-motion'
 // PanInfo bruges i MoodCard's handleDrag
-import { Heart, X, RotateCcw, Undo2 } from 'lucide-react'
+import { Heart, X, RotateCcw, Undo2, ChevronUp } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import ProfileSheet from '../components/ProfileSheet'
@@ -91,15 +91,25 @@ function MoodCard({ mood, onSwipe, onTap }: {
         )}
 
         <div className="absolute bottom-0 left-0 right-0 px-3 pt-8 pb-3 bg-gradient-to-t from-black/75 via-black/40 to-transparent">
-          <h2 className="text-white text-base font-bold leading-tight">{mood.name}</h2>
-          {mood.description && <p className="text-white/75 text-[11px] mt-0.5 line-clamp-1">{mood.description}</p>}
-          {mood.tags?.length > 0 && (
-            <div className="flex flex-wrap gap-1 mt-1.5">
-              {mood.tags.slice(0, 5).map(tag => (
-                <span key={tag} className="text-white text-[10px] bg-white/20 backdrop-blur-sm px-2 py-0.5 rounded-full">{tag}</span>
-              ))}
+          <div className="flex items-end gap-2">
+            <div className="flex-1 min-w-0">
+              <h2 className="text-white text-base font-bold leading-tight">{mood.name}</h2>
+              {mood.description && <p className="text-white/75 text-[11px] mt-0.5 line-clamp-1">{mood.description}</p>}
+              {mood.tags?.length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-1.5">
+                  {mood.tags.slice(0, 5).map(tag => (
+                    <span key={tag} className="text-white text-[10px] bg-white/20 backdrop-blur-sm px-2 py-0.5 rounded-full">{tag}</span>
+                  ))}
+                </div>
+              )}
             </div>
-          )}
+            <button
+              onClick={e => { e.stopPropagation(); onTap(0) }}
+              className="flex-shrink-0 w-9 h-9 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center mb-0.5"
+            >
+              <ChevronUp size={20} className="text-white" />
+            </button>
+          </div>
         </div>
       </div>
     </motion.div>

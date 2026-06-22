@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
-import { motion, PanInfo } from 'framer-motion'
-import { Heart, X } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Heart, X, ChevronDown } from 'lucide-react'
 
 export type MoodImage = { id: string; url: string; order_index: number }
 export type MoodPrompt = { question: string; answer: string }
@@ -21,9 +21,10 @@ type Props = {
   readOnly?: boolean
 }
 
+export { AnimatePresence }
+
 export default function ProfileSheet({ mood, onClose, onSwipe, startIndex = 0, readOnly = false }: Props) {
   const [imgIndex, setImgIndex] = useState(startIndex)
-  const [imageExpanded, setImageExpanded] = useState(false)
   const images = [...mood.mood_images].sort((a, b) => a.order_index - b.order_index)
 
   useEffect(() => {
@@ -31,84 +32,69 @@ export default function ProfileSheet({ mood, onClose, onSwipe, startIndex = 0, r
     return () => { document.body.style.overflow = '' }
   }, [])
 
-  const handlePanEnd = (_: unknown, info: PanInfo) => {
-    if (info.offset.y > 30) setImageExpanded(true)
-    else if (info.offset.y < -30) setImageExpanded(false)
-  }
-
-  const IMAGE_COLLAPSED = 280
-  const IMAGE_EXPANDED = window.innerHeight * 0.78
-
   return (
     <motion.div
-      className="fixed inset-0 z-50 flex flex-col"
+      className="fixed inset-0 z-50"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.2 }}
     >
+      {/* Backdrop */}
       <div className="absolute inset-0 bg-black/80" onClick={onClose} />
 
+      {/* Sheet */}
       <motion.div
         className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl flex flex-col"
-        style={{ maxHeight: '92vh', overflow: 'hidden' }}
+        style={{ maxHeight: '94vh', overflow: 'hidden' }}
         initial={{ y: '100%' }}
         animate={{ y: 0 }}
         exit={{ y: '100%' }}
         transition={{ type: 'spring', damping: 30, stiffness: 300 }}
       >
-        {/* Photo */}
-        <motion.div
-          className="relative flex-shrink-0"
-          animate={{ height: imageExpanded ? IMAGE_EXPANDED : IMAGE_COLLAPSED }}
-          transition={{ type: 'spring', damping: 28, stiffness: 260 }}
-        >
+        {/* Close button — hangs at the very top of the sheet */}
+        <div className="absolute top-0 left-0 right-0 flex justify-center z-20 -translate-y-1/2">
+          <button
+            onClick={onClose}
+            className="w-10 h-10 rounded-full bg-white shadow-lg flex items-center justify-center"
+          >
+            <ChevronDown size={20} className="text-gray-600" />
+          </button>
+        </div>
+
+        {/* Photo carousel */}
+        <div className="relative flex-shrink-0 h-72">
           {images.length > 0 ? (
-            <img src={images[imgIndex]?.url} className="w-full h-full object-cover object-top" alt={mood.name} />
+            <img
+              src={images[imgIndex]?.url}
+              className="w-full h-full object-cover object-top rounded-t-3xl"
+              alt={mood.name}
+            />
           ) : (
-            <div className="w-full h-full bg-gradient-to-br from-pink-400 to-red-500 flex items-center justify-center">
+            <div className="w-full h-full bg-gradient-to-br from-pink-400 to-red-500 rounded-t-3xl flex items-center justify-center">
               <span className="text-white text-6xl font-bold">{mood.name[0]}</span>
             </div>
           )}
 
+          {/* Progress dots */}
           {images.length > 1 && (
-            <div className="absolute top-3 left-0 right-0 flex gap-1 px-4 pointer-events-none">
+            <div className="absolute top-4 left-0 right-0 flex gap-1 px-4 pointer-events-none">
               {images.map((_, i) => (
                 <div key={i} className={`flex-1 h-1 rounded-full transition-all ${i === imgIndex ? 'bg-white' : 'bg-white/40'}`} />
               ))}
             </div>
           )}
 
-          <div className="absolute inset-0 flex">
+          {/* Tap zones */}
+          <div className="absolute inset-0 flex rounded-t-3xl overflow-hidden">
             <div className="flex-1" onClick={() => setImgIndex(i => Math.max(0, i - 1))} />
             <div className="flex-1" onClick={() => setImgIndex(i => Math.min(images.length - 1, i + 1))} />
           </div>
-        </motion.div>
-
-        {/* Drag handle */}
-        <motion.div
-          className="flex-shrink-0 flex justify-center items-center py-3 cursor-grab active:cursor-grabbing touch-none"
-          onPanEnd={handlePanEnd}
-          onTap={() => setImageExpanded(v => !v)}
-        >
-          <motion.div
-            className="rounded-full bg-gray-300"
-            animate={{
-              width: imageExpanded ? 32 : 40,
-              height: 5,
-              backgroundColor: imageExpanded ? '#FF4458' : '#d1d5db',
-            }}
-            transition={{ duration: 0.3 }}
-          />
-        </motion.div>
+        </div>
 
         {/* Scrollable content */}
-        <motion.div
-          className="flex-1 overflow-y-auto overscroll-contain"
-          animate={{ opacity: imageExpanded ? 0 : 1, pointerEvents: imageExpanded ? 'none' : 'auto' }}
-          transition={{ duration: 0.2 }}
-        >
-          <div className="px-5 pb-4 space-y-4">
+        <div className="flex-1 overflow-y-auto overscroll-contain">
+          <div className="px-5 pt-4 pb-4 space-y-4">
             <div>
               <h2 className="text-2xl font-bold text-gray-900">{mood.name}</h2>
               {mood.tags?.length > 0 && (
@@ -119,11 +105,13 @@ export default function ProfileSheet({ mood, onClose, onSwipe, startIndex = 0, r
                 </div>
               )}
             </div>
+
             {mood.description && (
               <div className="bg-gray-50 rounded-2xl p-4">
                 <p className="text-sm text-gray-800 leading-relaxed">{mood.description}</p>
               </div>
             )}
+
             {mood.prompts?.filter(p => p.answer).map((p, i) => (
               <div key={i} className="bg-gray-50 rounded-2xl p-4">
                 <p className="text-xs text-gray-500 mb-1.5">{p.question}</p>
@@ -131,9 +119,9 @@ export default function ProfileSheet({ mood, onClose, onSwipe, startIndex = 0, r
               </div>
             ))}
           </div>
-        </motion.div>
+        </div>
 
-        {/* Buttons */}
+        {/* Action buttons */}
         {readOnly ? (
           <div className="flex-shrink-0 px-6 pb-8 pt-3 border-t border-gray-100 bg-white">
             <button
@@ -163,4 +151,3 @@ export default function ProfileSheet({ mood, onClose, onSwipe, startIndex = 0, r
     </motion.div>
   )
 }
-
