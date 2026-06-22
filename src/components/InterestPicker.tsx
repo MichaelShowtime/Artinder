@@ -101,8 +101,8 @@ export default function InterestPicker({ value, onChange, max = 10 }: Props) {
                       disabled={disabled}
                       className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all border-2 disabled:opacity-30 ${
                         selected
-                          ? 'bg-white text-gray-900 border-gray-900'
-                          : 'bg-gray-900 text-white border-gray-900'
+                          ? 'bg-gray-900 text-white border-gray-900'
+                          : 'bg-white text-gray-900 border-gray-200'
                       }`}
                     >
                       {tag}

@@ -75,8 +75,8 @@ export default function MoodTagPicker({ value, onChange }: Props) {
                     onClick={() => toggle(tag)}
                     className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all border-2 ${
                       selected
-                        ? 'bg-white text-gray-900 border-gray-900'
-                        : 'bg-gray-900 text-white border-gray-900'
+                        ? 'bg-gray-900 text-white border-gray-900'
+                        : 'bg-white text-gray-900 border-gray-200'
                     }`}
                   >
                     {tag}
