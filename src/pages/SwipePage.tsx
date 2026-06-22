@@ -170,7 +170,7 @@ function MoodCard({ mood, onSwipe }: { mood: Mood; onSwipe: (liked: boolean) => 
 
   const handleDragStart = () => { draggedRef.current = false }
   const handleDrag = (_: unknown, info: { offset: { x: number; y: number } }) => {
-    if (Math.abs(info.offset.x) > 5 || Math.abs(info.offset.y) > 5) draggedRef.current = true
+    if (Math.abs(info.offset.x) > 12 || Math.abs(info.offset.y) > 12) draggedRef.current = true
   }
 
   const handleDragEnd = async (_: unknown, info: { offset: { x: number }; velocity: { x: number } }) => {
