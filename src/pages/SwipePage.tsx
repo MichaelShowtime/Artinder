@@ -30,6 +30,12 @@ function ProfileSheet({ mood, onClose, onSwipe }: {
   const [imgIndex, setImgIndex] = useState(0)
   const images = [...mood.mood_images].sort((a, b) => a.order_index - b.order_index)
 
+  // Lock body scroll while sheet is open
+  useEffect(() => {
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = '' }
+  }, [])
+
   return (
     <motion.div
       className="fixed inset-0 z-50 flex flex-col"
@@ -51,7 +57,7 @@ function ProfileSheet({ mood, onClose, onSwipe }: {
         transition={{ type: 'spring', damping: 30, stiffness: 300 }}
       >
         {/* Photo */}
-        <div className="relative flex-shrink-0" style={{ height: '55vw', maxHeight: 320 }}>
+        <div className="relative flex-shrink-0" style={{ height: '70vw', maxHeight: 380 }}>
           {images.length > 0 ? (
             <img src={images[imgIndex]?.url} className="w-full h-full object-cover" alt={mood.name} />
           ) : (
@@ -92,7 +98,7 @@ function ProfileSheet({ mood, onClose, onSwipe }: {
         </div>
 
         {/* Scrollable content */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto overscroll-contain">
           <div className="px-5 pb-4 space-y-4">
             {/* Name + tags */}
             <div>
