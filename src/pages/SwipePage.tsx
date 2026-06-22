@@ -59,7 +59,7 @@ function ProfileSheet({ mood, onClose, onSwipe }: {
         {/* Photo */}
         <div className="relative flex-shrink-0" style={{ height: '70vw', maxHeight: 380 }}>
           {images.length > 0 ? (
-            <img src={images[imgIndex]?.url} className="w-full h-full object-cover" alt={mood.name} />
+            <img src={images[imgIndex]?.url} className="w-full h-full object-cover object-top" alt={mood.name} />
           ) : (
             <div className="w-full h-full bg-gradient-to-br from-pink-400 to-red-500 flex items-center justify-center">
               <span className="text-white text-6xl font-bold">{mood.name[0]}</span>
