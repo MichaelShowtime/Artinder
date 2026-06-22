@@ -28,13 +28,21 @@ function ProfileSheet({ mood, onClose, onSwipe }: {
   onSwipe: (liked: boolean) => void
 }) {
   const [imgIndex, setImgIndex] = useState(0)
+  const [imageExpanded, setImageExpanded] = useState(false)
   const images = [...mood.mood_images].sort((a, b) => a.order_index - b.order_index)
 
-  // Lock body scroll while sheet is open
   useEffect(() => {
     document.body.style.overflow = 'hidden'
     return () => { document.body.style.overflow = '' }
   }, [])
+
+  const handlePan = (_: unknown, info: PanInfo) => {
+    if (info.offset.y > 40) setImageExpanded(true)
+    else if (info.offset.y < -40) setImageExpanded(false)
+  }
+
+  const IMAGE_COLLAPSED = 280
+  const IMAGE_EXPANDED = window.innerHeight * 0.78
 
   return (
     <motion.div
@@ -57,7 +65,11 @@ function ProfileSheet({ mood, onClose, onSwipe }: {
         transition={{ type: 'spring', damping: 30, stiffness: 300 }}
       >
         {/* Photo */}
-        <div className="relative flex-shrink-0" style={{ height: '70vw', maxHeight: 380 }}>
+        <motion.div
+          className="relative flex-shrink-0"
+          animate={{ height: imageExpanded ? IMAGE_EXPANDED : IMAGE_COLLAPSED }}
+          transition={{ type: 'spring', damping: 28, stiffness: 260 }}
+        >
           {images.length > 0 ? (
             <img src={images[imgIndex]?.url} className="w-full h-full object-cover object-top" alt={mood.name} />
           ) : (
@@ -66,7 +78,6 @@ function ProfileSheet({ mood, onClose, onSwipe }: {
             </div>
           )}
 
-          {/* Image progress dots */}
           {images.length > 1 && (
             <div className="absolute top-3 left-0 right-0 flex gap-1 px-4">
               {images.map((_, i) => (
@@ -75,8 +86,6 @@ function ProfileSheet({ mood, onClose, onSwipe }: {
               ))}
             </div>
           )}
-
-          {/* Prev/next */}
           {images.length > 1 && (
             <>
               <button onClick={() => setImgIndex(i => Math.max(0, i - 1))}
@@ -89,18 +98,32 @@ function ProfileSheet({ mood, onClose, onSwipe }: {
               </button>
             </>
           )}
+        </motion.div>
 
-          </div>
+        {/* Drag handle — træk ned for billede, op for info */}
+        <motion.div
+          className="flex-shrink-0 flex justify-center items-center py-3 cursor-grab active:cursor-grabbing touch-none"
+          onPan={handlePan}
+          onTap={() => setImageExpanded(v => !v)}
+        >
+          <motion.div
+            className="rounded-full bg-gray-300"
+            animate={{
+              width: imageExpanded ? 32 : 40,
+              height: 5,
+              backgroundColor: imageExpanded ? '#FF4458' : '#d1d5db',
+            }}
+            transition={{ duration: 0.3 }}
+          />
+        </motion.div>
 
-        {/* Drag handle */}
-        <div className="flex-shrink-0 flex justify-center pt-3 pb-1">
-          <div className="w-10 h-1 bg-gray-200 rounded-full" />
-        </div>
-
-        {/* Scrollable content */}
-        <div className="flex-1 overflow-y-auto overscroll-contain">
+        {/* Scrollable content — skjules når billede er udvidet */}
+        <motion.div
+          className="flex-1 overflow-y-auto overscroll-contain"
+          animate={{ opacity: imageExpanded ? 0 : 1, pointerEvents: imageExpanded ? 'none' : 'auto' }}
+          transition={{ duration: 0.2 }}
+        >
           <div className="px-5 pb-4 space-y-4">
-            {/* Name + tags */}
             <div>
               <h2 className="text-2xl font-bold text-gray-900">{mood.name}</h2>
               {mood.tags?.length > 0 && (
@@ -111,15 +134,11 @@ function ProfileSheet({ mood, onClose, onSwipe }: {
                 </div>
               )}
             </div>
-
-            {/* Description */}
             {mood.description && (
               <div className="bg-gray-50 rounded-2xl p-4">
                 <p className="text-sm text-gray-800 leading-relaxed">{mood.description}</p>
               </div>
             )}
-
-            {/* Prompts */}
             {mood.prompts?.filter(p => p.answer).map((p, i) => (
               <div key={i} className="bg-gray-50 rounded-2xl p-4">
                 <p className="text-xs text-gray-500 mb-1.5">{p.question}</p>
@@ -127,7 +146,7 @@ function ProfileSheet({ mood, onClose, onSwipe }: {
               </div>
             ))}
           </div>
-        </div>
+        </motion.div>
 
         {/* Like / Dislike buttons */}
         <div className="flex-shrink-0 px-6 pb-8 pt-3 flex gap-4 border-t border-gray-100 bg-white">
