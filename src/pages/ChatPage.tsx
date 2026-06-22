@@ -1,8 +1,11 @@
 import { useEffect, useState, useRef } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
+import { AnimatePresence } from 'framer-motion'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { ArrowLeft, Send, UserCircle } from 'lucide-react'
+import ProfileSheet from '../components/ProfileSheet'
+import type { SheetMood } from '../components/ProfileSheet'
 
 type Message = {
   id: string
@@ -17,7 +20,7 @@ type Reaction = { message_id: string; user_id: string; emoji: string }
 type MatchInfo = {
   id: string
   user_id: string
-  mood: { name: string }
+  mood: SheetMood
   user: { id: string; name: string; profile_images: { url: string }[] }
 }
 
@@ -43,6 +46,7 @@ export default function ChatPage() {
   const [text, setText] = useState('')
   const [sending, setSending] = useState(false)
   const [tappedId, setTappedId] = useState<string | null>(null)
+  const [showProfile, setShowProfile] = useState(false)
   const [reactions, setReactions] = useState<Reaction[]>([])
   const [userLastRead, setUserLastRead] = useState<string | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
@@ -62,7 +66,7 @@ export default function ChatPage() {
     const loadMatch = async () => {
       const { data } = await supabase
         .from('matches')
-        .select('id, user_id, mood:moods(name), user:profiles!matches_user_id_fkey(id, name, profile_images(url))')
+        .select('id, user_id, mood:moods(id, name, description, tags, prompts, mood_images(id, url, order_index)), user:profiles!matches_user_id_fkey(id, name, profile_images(url))')
         .eq('id', matchId)
         .single()
       setMatch(data as unknown as MatchInfo)
@@ -236,15 +240,20 @@ export default function ChatPage() {
             </div>
           </Link>
         ) : (
-          <div className="flex items-center gap-3 flex-1">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-pink-400 to-red-500 flex items-center justify-center">
-              <span className="text-white font-bold text-sm">A</span>
+          <button
+            className="flex items-center gap-3 flex-1 text-left active:opacity-70 transition-opacity"
+            onClick={() => match && setShowProfile(true)}
+          >
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-pink-400 to-red-500 flex items-center justify-center overflow-hidden">
+              {match?.mood?.mood_images?.[0]?.url
+                ? <img src={match.mood.mood_images[0].url} className="w-full h-full object-cover object-top" alt={otherName ?? ''} />
+                : <span className="text-white font-bold text-sm">A</span>}
             </div>
             <div>
               <p className="font-semibold text-sm">{otherName}</p>
-              <p className="text-xs text-gray-500">{subtitle}</p>
+              <p className="text-xs text-primary">{subtitle}</p>
             </div>
-          </div>
+          </button>
         )}
         {isArtin && (
           <button onClick={sendNej} className="px-4 py-1.5 bg-gray-900 text-white text-sm font-bold rounded-full">
@@ -322,6 +331,16 @@ export default function ChatPage() {
         })}
         <div ref={bottomRef} />
       </div>
+
+      <AnimatePresence>
+        {showProfile && match?.mood && (
+          <ProfileSheet
+            mood={match.mood}
+            onClose={() => setShowProfile(false)}
+            readOnly
+          />
+        )}
+      </AnimatePresence>
 
       <div className="flex-shrink-0 px-4 py-3 border-t border-gray-100 flex gap-2">
         <input
