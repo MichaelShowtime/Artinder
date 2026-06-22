@@ -1,10 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
-import { motion, useMotionValue, useTransform, PanInfo, AnimatePresence } from 'framer-motion'
-// PanInfo bruges i MoodCard's handleDrag
-import { Heart, X, RotateCcw, Undo2, ChevronUp } from 'lucide-react'
+import { motion, useMotionValue, useTransform, PanInfo } from 'framer-motion'
+import { Heart, X, RotateCcw, Undo2, ChevronUp, ChevronDown } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
-import ProfileSheet from '../components/ProfileSheet'
 import type { SheetMood } from '../components/ProfileSheet'
 
 type Mood = SheetMood
@@ -16,15 +14,15 @@ type HistoryItem = {
 }
 
 // --- Swipe card ---
-function MoodCard({ mood, onSwipe, onTap }: {
+function MoodCard({ mood, onSwipe }: {
   mood: Mood
   onSwipe: (liked: boolean) => void
-  onTap: (startIndex: number) => void
 }) {
   const [imgIndex, setImgIndex] = useState(0)
+  const [expanded, setExpanded] = useState(false)
   const x = useMotionValue(0)
   const rotate = useTransform(x, [-200, 200], [-25, 25])
-  const opacity = useTransform(x, [-200, -150, 0, 150, 200], [0, 1, 1, 1, 0])
+  const cardOpacity = useTransform(x, [-200, -150, 0, 150, 200], [0, 1, 1, 1, 0])
   const likeOpacity = useTransform(x, [0, 100], [0, 1])
   const nopeOpacity = useTransform(x, [-100, 0], [1, 0])
   const draggedRef = useRef(false)
@@ -40,61 +38,81 @@ function MoodCard({ mood, onSwipe, onTap }: {
     else if (info.offset.x < -120) onSwipe(false)
   }
 
-  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (draggedRef.current) return
+  const handleCardClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (draggedRef.current || expanded) return
     const rect = e.currentTarget.getBoundingClientRect()
     const isLeft = e.clientX < rect.left + rect.width / 2
     if (isLeft) {
       setImgIndex(i => Math.max(0, i - 1))
     } else {
-      if (imgIndex < images.length - 1) {
-        setImgIndex(i => i + 1)
-      } else {
-        onTap(imgIndex)
-      }
+      setImgIndex(i => Math.min(images.length - 1, i + 1))
     }
   }
 
   return (
     <motion.div
-      style={{ x, rotate, opacity }}
-      drag="x"
+      style={{ x, rotate, opacity: cardOpacity, cursor: expanded ? 'default' : 'grab' }}
+      drag={expanded ? false : 'x'}
       dragConstraints={{ left: 0, right: 0 }}
       onDragStart={handleDragStart}
       onDrag={handleDrag}
       onDragEnd={handleDragEnd}
-      onClick={handleClick}
-      className="absolute inset-0 cursor-grab active:cursor-grabbing select-none"
+      onClick={handleCardClick}
+      className="absolute inset-0 select-none"
     >
       <div className="relative w-full h-full rounded-2xl overflow-hidden card-shadow bg-black">
+
+        {/* Background image */}
         {images.length > 0 ? (
-          <img src={images[imgIndex]?.url} className="w-full h-full object-contain" draggable={false} alt={mood.name} />
+          <img
+            src={images[imgIndex]?.url}
+            className="w-full h-full object-contain"
+            draggable={false}
+            alt={mood.name}
+          />
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-pink-400 to-red-500 flex items-center justify-center">
             <span className="text-white text-6xl font-bold">{mood.name[0]}</span>
           </div>
         )}
 
-        <motion.div style={{ opacity: likeOpacity }} className="absolute top-10 left-6 rotate-[-20deg] border-4 border-green-400 rounded-lg px-3 py-1">
+        {/* Dim overlay when info panel is open */}
+        <motion.div
+          className="absolute inset-0 bg-black/50 pointer-events-none"
+          animate={{ opacity: expanded ? 1 : 0 }}
+          transition={{ duration: 0.25 }}
+        />
+
+        {/* LIKE / NOPE stamps */}
+        <motion.div style={{ opacity: likeOpacity }} className="absolute top-10 left-6 rotate-[-20deg] border-4 border-green-400 rounded-lg px-3 py-1 pointer-events-none">
           <span className="text-green-400 font-black text-2xl">LIKE</span>
         </motion.div>
-        <motion.div style={{ opacity: nopeOpacity }} className="absolute top-10 right-6 rotate-[20deg] border-4 border-red-400 rounded-lg px-3 py-1">
+        <motion.div style={{ opacity: nopeOpacity }} className="absolute top-10 right-6 rotate-[20deg] border-4 border-red-400 rounded-lg px-3 py-1 pointer-events-none">
           <span className="text-red-400 font-black text-2xl">NOPE</span>
         </motion.div>
 
+        {/* Image progress bar */}
         {images.length > 1 && (
-          <div className="absolute top-3 left-0 right-0 flex gap-1 px-3">
+          <div className="absolute top-3 left-0 right-0 flex gap-1 px-3 pointer-events-none">
             {images.map((_, i) => (
               <div key={i} className={`flex-1 h-0.5 rounded-full ${i === imgIndex ? 'bg-white' : 'bg-white/40'}`} />
             ))}
           </div>
         )}
 
-        <div className="absolute bottom-0 left-0 right-0 px-3 pt-8 pb-3 bg-gradient-to-t from-black/75 via-black/40 to-transparent">
+        {/* Compact bottom overlay — hides when panel opens */}
+        <motion.div
+          className="absolute bottom-0 left-0 right-0 px-3 pt-8 pb-3 bg-gradient-to-t from-black/75 via-black/40 to-transparent"
+          animate={{ opacity: expanded ? 0 : 1 }}
+          transition={{ duration: 0.2 }}
+          style={{ pointerEvents: expanded ? 'none' : 'auto' }}
+        >
           <div className="flex items-end gap-2">
             <div className="flex-1 min-w-0">
               <h2 className="text-white text-base font-bold leading-tight">{mood.name}</h2>
-              {mood.description && <p className="text-white/75 text-[11px] mt-0.5 line-clamp-1">{mood.description}</p>}
+              {mood.description && (
+                <p className="text-white/75 text-[11px] mt-0.5 line-clamp-1">{mood.description}</p>
+              )}
               {mood.tags?.length > 0 && (
                 <div className="flex flex-wrap gap-1 mt-1.5">
                   {mood.tags.slice(0, 5).map(tag => (
@@ -104,13 +122,86 @@ function MoodCard({ mood, onSwipe, onTap }: {
               )}
             </div>
             <button
-              onClick={e => { e.stopPropagation(); onTap(0) }}
+              onClick={e => { e.stopPropagation(); setExpanded(true) }}
               className="flex-shrink-0 w-9 h-9 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center mb-0.5"
             >
               <ChevronUp size={20} className="text-white" />
             </button>
           </div>
-        </div>
+        </motion.div>
+
+        {/* Info panel — glides up from bottom of card */}
+        <motion.div
+          className="absolute inset-x-0 bottom-0 bg-white rounded-t-2xl flex flex-col"
+          style={{ maxHeight: '84%' }}
+          initial={false}
+          animate={{ y: expanded ? 0 : '100%' }}
+          transition={{ type: 'spring', damping: 32, stiffness: 320 }}
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between px-4 py-3 flex-shrink-0">
+            <h2 className="text-lg font-bold text-gray-900 truncate pr-2">{mood.name}</h2>
+            <button
+              onClick={e => { e.stopPropagation(); setExpanded(false) }}
+              className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center"
+            >
+              <ChevronDown size={18} className="text-gray-600" />
+            </button>
+          </div>
+
+          {/* Scrollable content */}
+          <div
+            className="flex-1 overflow-y-auto overscroll-contain"
+            onClick={e => e.stopPropagation()}
+            onMouseDown={e => e.stopPropagation()}
+            onTouchStart={e => e.stopPropagation()}
+          >
+            {/* Photo carousel inside panel */}
+            {images.length > 0 && (
+              <div className="relative h-48 flex-shrink-0">
+                <img
+                  src={images[imgIndex]?.url}
+                  className="w-full h-full object-cover object-top"
+                  alt={mood.name}
+                  draggable={false}
+                />
+                {images.length > 1 && (
+                  <div className="absolute top-2 left-0 right-0 flex gap-1 px-4 pointer-events-none">
+                    {images.map((_, i) => (
+                      <div key={i} className={`flex-1 h-1 rounded-full transition-all ${i === imgIndex ? 'bg-white' : 'bg-white/40'}`} />
+                    ))}
+                  </div>
+                )}
+                <div className="absolute inset-0 flex">
+                  <div className="flex-1" onClick={e => { e.stopPropagation(); setImgIndex(i => Math.max(0, i - 1)) }} />
+                  <div className="flex-1" onClick={e => { e.stopPropagation(); setImgIndex(i => Math.min(images.length - 1, i + 1)) }} />
+                </div>
+              </div>
+            )}
+
+            <div className="px-4 pb-4 pt-3 space-y-3">
+              {mood.tags?.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {mood.tags.map(tag => (
+                    <span key={tag} className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium">{tag}</span>
+                  ))}
+                </div>
+              )}
+              {mood.description && (
+                <div className="bg-gray-50 rounded-2xl p-4">
+                  <p className="text-sm text-gray-800 leading-relaxed">{mood.description}</p>
+                </div>
+              )}
+              {mood.prompts?.filter(p => p.answer).map((p, i) => (
+                <div key={i} className="bg-gray-50 rounded-2xl p-4">
+                  <p className="text-xs text-gray-500 mb-1.5">{p.question}</p>
+                  <p className="text-base font-bold text-gray-900 leading-snug">{p.answer}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </motion.div>
+
       </div>
     </motion.div>
   )
@@ -124,7 +215,6 @@ export default function SwipePage() {
   const [history, setHistory] = useState<HistoryItem[]>([])
   const [loading, setLoading] = useState(true)
   const [matched, setMatched] = useState(false)
-  const [viewingMood, setViewingMood] = useState<{ mood: Mood; startIndex: number } | null>(null)
   const processingRef = useRef(false)
 
   const loadMoods = async (userId: string, includeNoSwipes = false) => {
@@ -262,7 +352,6 @@ export default function SwipePage() {
               key={mood.id}
               mood={mood}
               onSwipe={handleSwipe}
-              onTap={(startIndex) => setViewingMood({ mood, startIndex })}
             />
           ) : (
             <div key={mood.id} className="absolute inset-0 rounded-2xl bg-gray-200 card-shadow"
@@ -289,17 +378,6 @@ export default function SwipePage() {
           <RotateCcw size={18} className="text-blue-400" />
         </button>
       </div>
-
-      <AnimatePresence>
-        {viewingMood && (
-          <ProfileSheet
-            mood={viewingMood.mood}
-            startIndex={viewingMood.startIndex}
-            onClose={() => setViewingMood(null)}
-            onSwipe={handleSwipe}
-          />
-        )}
-      </AnimatePresence>
     </div>
   )
 }
