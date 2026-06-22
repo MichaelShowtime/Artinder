@@ -126,8 +126,23 @@ export default function ChatPage() {
 
     const reactionSub = supabase
       .channel(`reactions:${matchId}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'message_reactions' }, () => {
-        loadReactions()
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'message_reactions' }, payload => {
+        const r = payload.new as Reaction
+        setReactions(prev => {
+          const without = prev.filter(x => !(x.message_id === r.message_id && x.user_id === r.user_id))
+          return [...without, { message_id: r.message_id, user_id: r.user_id, emoji: r.emoji }]
+        })
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'message_reactions' }, payload => {
+        const r = payload.new as Reaction
+        setReactions(prev => {
+          const without = prev.filter(x => !(x.message_id === r.message_id && x.user_id === r.user_id))
+          return [...without, { message_id: r.message_id, user_id: r.user_id, emoji: r.emoji }]
+        })
+      })
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'message_reactions' }, payload => {
+        const r = payload.old as Reaction
+        setReactions(prev => prev.filter(x => !(x.message_id === r.message_id && x.user_id === r.user_id)))
       })
       .subscribe()
 
