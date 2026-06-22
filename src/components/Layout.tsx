@@ -53,16 +53,21 @@ function useUnreadCount() {
     load()
   }, [location.pathname, user])
 
-  // Subscribe to new messages globally
+  // Subscribe to new messages + reads globally
   useEffect(() => {
     if (!user) return
-    const sub = supabase
+    const msgSub = supabase
       .channel('global-messages')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, () => {
-        load()
-      })
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, () => load())
       .subscribe()
-    return () => { supabase.removeChannel(sub) }
+    const readSub = supabase
+      .channel('global-reads')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'match_reads' }, () => load())
+      .subscribe()
+    return () => {
+      supabase.removeChannel(msgSub)
+      supabase.removeChannel(readSub)
+    }
   }, [user])
 
   return count

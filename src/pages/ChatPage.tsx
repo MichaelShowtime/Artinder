@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useMemo } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
 import { supabase } from '../lib/supabase'
@@ -25,6 +25,7 @@ type MatchInfo = {
 }
 
 const EMOJIS = ['❤️', '😂', '😮', '😢', '🔥', '👏']
+const REVOKE_SENTINEL = '__REVOKE_NEJ__'
 
 function formatTime(iso: string) {
   return new Date(iso).toLocaleTimeString('da-DK', { hour: '2-digit', minute: '2-digit' })
@@ -50,6 +51,21 @@ export default function ChatPage() {
   const [reactions, setReactions] = useState<Reaction[]>([])
   const [userLastRead, setUserLastRead] = useState<string | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
+
+  // NEJ is active if scanning backwards we hit is_nej before a revoke sentinel
+  const nejActive = useMemo(() => {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].is_nej) return true
+      if (messages[i].content === REVOKE_SENTINEL) return false
+    }
+    return false
+  }, [messages])
+
+  // Messages visible in UI (hide the revoke sentinel system message)
+  const visibleMessages = useMemo(
+    () => messages.filter(m => m.content !== REVOKE_SENTINEL),
+    [messages]
+  )
 
   // Mark match as read when opening
   useEffect(() => {
@@ -168,7 +184,7 @@ export default function ChatPage() {
   }, [messages])
 
   const send = async () => {
-    if (!text.trim() || !user || !matchId || sending) return
+    if (!text.trim() || !user || !matchId || sending || (!isArtin && nejActive)) return
     setSending(true)
     const content = text.trim()
     const optimistic: Message = {
@@ -213,6 +229,26 @@ export default function ChatPage() {
     setSending(false)
   }
 
+  const revokeNej = async () => {
+    if (!user || !matchId || sending) return
+    setSending(true)
+    const optimistic: Message = {
+      id: `opt-${Date.now()}`,
+      sender_id: user.id,
+      content: REVOKE_SENTINEL,
+      is_nej: false,
+      created_at: new Date().toISOString(),
+    }
+    setMessages(prev => [...prev, optimistic])
+    const { data } = await supabase
+      .from('messages')
+      .insert({ match_id: matchId, sender_id: user.id, content: REVOKE_SENTINEL, is_nej: false })
+      .select()
+      .single()
+    if (data) setMessages(prev => prev.map(m => m.id === optimistic.id ? data as Message : m))
+    setSending(false)
+  }
+
   const toggleTapped = (id: string) =>
     setTappedId(prev => prev === id ? null : id)
 
@@ -232,9 +268,9 @@ export default function ChatPage() {
   const getReactions = (messageId: string) =>
     reactions.filter(r => r.message_id === messageId)
 
-  // Last message Artin sent — show "read" below it if user has read after
+  // Last Artin message index (in visibleMessages) — for read receipt
   const artinIdxs = isArtin
-    ? messages.map((m, i) => (m.sender_id === user?.id ? i : -1)).filter(i => i >= 0)
+    ? visibleMessages.map((m, i) => (m.sender_id === user?.id ? i : -1)).filter(i => i >= 0)
     : []
   const lastArtinMsgIdx = artinIdxs.length > 0 ? artinIdxs[artinIdxs.length - 1] : -1
 
@@ -243,6 +279,7 @@ export default function ChatPage() {
 
   return (
     <div className="h-full flex flex-col">
+      {/* Header */}
       <div className="flex-shrink-0 flex items-center gap-3 px-4 py-3 border-b border-gray-100">
         <button onClick={() => navigate(-1)} className="p-1">
           <ArrowLeft size={22} className="text-gray-600" />
@@ -276,14 +313,29 @@ export default function ChatPage() {
           </button>
         )}
         {isArtin && (
-          <button onClick={sendNej} className="px-4 py-1.5 bg-gray-900 text-white text-sm font-bold rounded-full">
-            Nej
-          </button>
+          nejActive ? (
+            <button
+              onClick={revokeNej}
+              disabled={sending}
+              className="px-3 py-1.5 bg-green-600 text-white text-xs font-bold rounded-full disabled:opacity-50"
+            >
+              Fortryd NEJ
+            </button>
+          ) : (
+            <button
+              onClick={sendNej}
+              disabled={sending}
+              className="px-4 py-1.5 bg-gray-900 text-white text-sm font-bold rounded-full disabled:opacity-50"
+            >
+              Nej
+            </button>
+          )
         )}
       </div>
 
+      {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-1" onClick={() => setTappedId(null)}>
-        {messages.map((msg, idx) => {
+        {visibleMessages.map((msg, idx) => {
           const isMe = msg.sender_id === user?.id
           const msgReactions = getReactions(msg.id)
           const showRead =
@@ -362,23 +414,30 @@ export default function ChatPage() {
         )}
       </AnimatePresence>
 
-      <div className="flex-shrink-0 px-4 py-3 border-t border-gray-100 flex gap-2">
-        <input
-          type="text"
-          placeholder="Skriv en besked..."
-          value={text}
-          onChange={e => setText(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && send()}
-          className="flex-1 border border-gray-200 rounded-full px-4 py-2.5 text-sm focus:outline-none focus:border-primary"
-        />
-        <button
-          onClick={send}
-          disabled={!text.trim() || sending}
-          className="w-10 h-10 bg-primary rounded-full flex items-center justify-center disabled:opacity-40"
-        >
-          <Send size={16} className="text-white" />
-        </button>
-      </div>
+      {/* Input — blocked for normal user when NEJ is active */}
+      {!isArtin && nejActive ? (
+        <div className="flex-shrink-0 px-4 py-5 border-t border-gray-100 text-center">
+          <p className="text-sm text-gray-400">💔 Artin har sagt NEJ</p>
+        </div>
+      ) : (
+        <div className="flex-shrink-0 px-4 py-3 border-t border-gray-100 flex gap-2">
+          <input
+            type="text"
+            placeholder="Skriv en besked..."
+            value={text}
+            onChange={e => setText(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && send()}
+            className="flex-1 border border-gray-200 rounded-full px-4 py-2.5 text-sm focus:outline-none focus:border-primary"
+          />
+          <button
+            onClick={send}
+            disabled={!text.trim() || sending}
+            className="w-10 h-10 bg-primary rounded-full flex items-center justify-center disabled:opacity-40"
+          >
+            <Send size={16} className="text-white" />
+          </button>
+        </div>
+      )}
     </div>
   )
 }
