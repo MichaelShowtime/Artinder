@@ -1,15 +1,17 @@
 import { useState, useEffect, useRef } from 'react'
-import { motion, useMotionValue, useTransform, PanInfo } from 'framer-motion'
-import { Heart, X, ChevronLeft, ChevronRight, RotateCcw, Undo2 } from 'lucide-react'
+import { motion, useMotionValue, useTransform, PanInfo, AnimatePresence } from 'framer-motion'
+import { Heart, X, ChevronLeft, ChevronRight, RotateCcw, Undo2, ChevronDown } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 
 type MoodImage = { id: string; url: string; order_index: number }
+type MoodPrompt = { question: string; answer: string }
 type Mood = {
   id: string
   name: string
   description: string | null
   tags: string[]
+  prompts: MoodPrompt[] | null
   mood_images: MoodImage[]
 }
 type HistoryItem = {
@@ -19,37 +21,187 @@ type HistoryItem = {
   matchId?: string
 }
 
-function MoodCard({ mood, onSwipe }: { mood: Mood; onSwipe: (liked: boolean) => void }) {
+// --- Profile sheet shown when tapping the card ---
+function ProfileSheet({ mood, onClose, onSwipe }: {
+  mood: Mood
+  onClose: () => void
+  onSwipe: (liked: boolean) => void
+}) {
+  const [imgIndex, setImgIndex] = useState(0)
+  const images = [...mood.mood_images].sort((a, b) => a.order_index - b.order_index)
+
+  return (
+    <motion.div
+      className="fixed inset-0 z-50 flex flex-col"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.2 }}
+    >
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/60" onClick={onClose} />
+
+      {/* Sheet */}
+      <motion.div
+        className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl overflow-hidden flex flex-col"
+        style={{ maxHeight: '92vh' }}
+        initial={{ y: '100%' }}
+        animate={{ y: 0 }}
+        exit={{ y: '100%' }}
+        transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+      >
+        {/* Photo */}
+        <div className="relative flex-shrink-0" style={{ height: '55vw', maxHeight: 320 }}>
+          {images.length > 0 ? (
+            <img src={images[imgIndex]?.url} className="w-full h-full object-cover" alt={mood.name} />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-pink-400 to-red-500 flex items-center justify-center">
+              <span className="text-white text-6xl font-bold">{mood.name[0]}</span>
+            </div>
+          )}
+
+          {/* Image progress dots */}
+          {images.length > 1 && (
+            <div className="absolute top-3 left-0 right-0 flex gap-1 px-4">
+              {images.map((_, i) => (
+                <button key={i} onClick={() => setImgIndex(i)}
+                  className={`flex-1 h-1 rounded-full transition-all ${i === imgIndex ? 'bg-white' : 'bg-white/40'}`} />
+              ))}
+            </div>
+          )}
+
+          {/* Prev/next */}
+          {images.length > 1 && (
+            <>
+              <button onClick={() => setImgIndex(i => Math.max(0, i - 1))}
+                className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center">
+                <ChevronLeft size={22} className="text-white drop-shadow" />
+              </button>
+              <button onClick={() => setImgIndex(i => Math.min(images.length - 1, i + 1))}
+                className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center">
+                <ChevronRight size={22} className="text-white drop-shadow" />
+              </button>
+            </>
+          )}
+
+          {/* Close pill */}
+          <button onClick={onClose}
+            className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur-sm rounded-full px-4 py-1.5 flex items-center gap-1 shadow-md">
+            <ChevronDown size={16} className="text-gray-600" />
+            <span className="text-xs font-semibold text-gray-700">Luk</span>
+          </button>
+        </div>
+
+        {/* Scrollable content */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="p-5 space-y-4">
+            {/* Name + tags */}
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">{mood.name}</h2>
+              {mood.tags?.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {mood.tags.map(tag => (
+                    <span key={tag} className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium">{tag}</span>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Description */}
+            {mood.description && (
+              <div className="bg-gray-50 rounded-2xl p-4">
+                <p className="text-sm text-gray-800 leading-relaxed">{mood.description}</p>
+              </div>
+            )}
+
+            {/* Prompts */}
+            {mood.prompts?.filter(p => p.answer).map((p, i) => (
+              <div key={i} className="bg-gray-50 rounded-2xl p-4">
+                <p className="text-xs text-gray-500 mb-1.5">{p.question}</p>
+                <p className="text-lg font-bold text-gray-900 leading-snug">{p.answer}</p>
+              </div>
+            ))}
+
+            {/* Extra photos */}
+            {images.length > 1 && (
+              <div>
+                <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Billeder</p>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {images.map((img, i) => (
+                    <button key={i} onClick={() => setImgIndex(i)}
+                      className={`aspect-square rounded-xl overflow-hidden ring-2 transition-all ${i === imgIndex ? 'ring-primary' : 'ring-transparent'}`}>
+                      <img src={img.url} className="w-full h-full object-cover" alt="" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Bottom padding for buttons */}
+            <div className="h-4" />
+          </div>
+        </div>
+
+        {/* Like / Dislike buttons */}
+        <div className="flex-shrink-0 px-6 pb-8 pt-3 flex gap-4 border-t border-gray-100 bg-white">
+          <button
+            onClick={() => { onSwipe(false); onClose() }}
+            className="flex-1 py-3.5 rounded-2xl border-2 border-gray-200 flex items-center justify-center gap-2 text-gray-500 font-semibold text-sm"
+          >
+            <X size={20} /> Nej tak
+          </button>
+          <button
+            onClick={() => { onSwipe(true); onClose() }}
+            className="flex-1 py-3.5 rounded-2xl bg-primary flex items-center justify-center gap-2 text-white font-semibold text-sm"
+          >
+            <Heart size={20} fill="white" /> Synes godt om
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
+  )
+}
+
+// --- Swipe card ---
+function MoodCard({ mood, onSwipe, onTap }: {
+  mood: Mood
+  onSwipe: (liked: boolean) => void
+  onTap: () => void
+}) {
   const [imgIndex, setImgIndex] = useState(0)
   const x = useMotionValue(0)
   const rotate = useTransform(x, [-200, 200], [-25, 25])
   const opacity = useTransform(x, [-200, -150, 0, 150, 200], [0, 1, 1, 1, 0])
   const likeOpacity = useTransform(x, [0, 100], [0, 1])
   const nopeOpacity = useTransform(x, [-100, 0], [1, 0])
+  const draggedRef = useRef(false)
 
   const images = [...mood.mood_images].sort((a, b) => a.order_index - b.order_index)
 
+  const handleDragStart = () => { draggedRef.current = false }
+  const handleDrag = (_: unknown, info: PanInfo) => {
+    if (Math.abs(info.offset.x) > 8 || Math.abs(info.offset.y) > 8) draggedRef.current = true
+  }
   const handleDragEnd = (_: unknown, info: PanInfo) => {
     if (info.offset.x > 120) onSwipe(true)
     else if (info.offset.x < -120) onSwipe(false)
   }
+  const handleClick = () => { if (!draggedRef.current) onTap() }
 
   return (
     <motion.div
       style={{ x, rotate, opacity }}
       drag="x"
       dragConstraints={{ left: 0, right: 0 }}
+      onDragStart={handleDragStart}
+      onDrag={handleDrag}
       onDragEnd={handleDragEnd}
+      onClick={handleClick}
       className="absolute inset-0 cursor-grab active:cursor-grabbing select-none"
     >
       <div className="relative w-full h-full rounded-2xl overflow-hidden card-shadow bg-gray-200">
         {images.length > 0 ? (
-          <img
-            src={images[imgIndex]?.url}
-            className="w-full h-full object-cover"
-            draggable={false}
-            alt={mood.name}
-          />
+          <img src={images[imgIndex]?.url} className="w-full h-full object-cover" draggable={false} alt={mood.name} />
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-pink-400 to-red-500 flex items-center justify-center">
             <span className="text-white text-6xl font-bold">{mood.name[0]}</span>
@@ -93,12 +245,15 @@ function MoodCard({ mood, onSwipe }: { mood: Mood; onSwipe: (liked: boolean) => 
               ))}
             </div>
           )}
+          {/* Tap hint */}
+          <p className="text-white/50 text-xs mt-2">Tryk for at se profil</p>
         </div>
       </div>
     </motion.div>
   )
 }
 
+// --- Main page ---
 export default function SwipePage() {
   const { user } = useAuth()
   const [moods, setMoods] = useState<Mood[]>([])
@@ -106,12 +261,12 @@ export default function SwipePage() {
   const [history, setHistory] = useState<HistoryItem[]>([])
   const [loading, setLoading] = useState(true)
   const [matched, setMatched] = useState(false)
+  const [viewingMood, setViewingMood] = useState<Mood | null>(null)
   const processingRef = useRef(false)
 
   const loadMoods = async (userId: string, includeNoSwipes = false) => {
     let likedIds: string[] = []
     if (includeNoSwipes) {
-      // Reset: delete all "no" swipes, then reload all except liked
       await supabase.from('swipes').delete().eq('user_id', userId).eq('liked', false)
       const { data: liked } = await supabase.from('swipes').select('mood_id').eq('user_id', userId).eq('liked', true)
       likedIds = (liked || []).map(s => s.mood_id)
@@ -122,7 +277,7 @@ export default function SwipePage() {
 
     let query = supabase
       .from('moods')
-      .select('id, name, description, tags, mood_images(id, url, order_index)')
+      .select('id, name, description, tags, prompts, mood_images(id, url, order_index)')
       .order('created_at')
     if (likedIds.length > 0) {
       query = query.not('id', 'in', `(${likedIds.join(',')})`)
@@ -161,12 +316,7 @@ export default function SwipePage() {
       matchId = matchData?.id
     }
 
-    setHistory(prev => [...prev, {
-      mood,
-      liked,
-      swipeId: swipeData?.id ?? '',
-      matchId,
-    }])
+    setHistory(prev => [...prev, { mood, liked, swipeId: swipeData?.id ?? '', matchId }])
 
     if (liked) {
       setMatched(true)
@@ -184,15 +334,9 @@ export default function SwipePage() {
   const handleUndo = async () => {
     if (processingRef.current || history.length === 0) return
     processingRef.current = true
-
     const last = history[history.length - 1]
-    if (last.swipeId) {
-      await supabase.from('swipes').delete().eq('id', last.swipeId)
-    }
-    if (last.matchId) {
-      await supabase.from('matches').delete().eq('id', last.matchId)
-    }
-
+    if (last.swipeId) await supabase.from('swipes').delete().eq('id', last.swipeId)
+    if (last.matchId) await supabase.from('matches').delete().eq('id', last.matchId)
     setHistory(prev => prev.slice(0, -1))
     setCurrentIndex(i => i - 1)
     processingRef.current = false
@@ -226,10 +370,8 @@ export default function SwipePage() {
         </div>
         <h3 className="text-lg font-semibold text-gray-800">Ingen flere personaer</h3>
         <p className="text-gray-500 text-sm mt-2">Du har set alle Artins personaer.</p>
-        <button
-          onClick={handleReset}
-          className="mt-6 flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-full text-sm font-semibold"
-        >
+        <button onClick={handleReset}
+          className="mt-6 flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-full text-sm font-semibold">
           <RotateCcw size={16} /> Se dem igen
         </button>
       </div>
@@ -253,51 +395,47 @@ export default function SwipePage() {
           const total = Math.min(remaining.length, 3)
           const isTop = i === total - 1
           return isTop ? (
-            <MoodCard key={mood.id} mood={mood} onSwipe={handleSwipe} />
-          ) : (
-            <div
+            <MoodCard
               key={mood.id}
-              className="absolute inset-0 rounded-2xl bg-gray-200 card-shadow"
-              style={{ transform: `scale(${0.95 - (total - 1 - i) * 0.03}) translateY(${(total - 1 - i) * 10}px)` }}
+              mood={mood}
+              onSwipe={handleSwipe}
+              onTap={() => setViewingMood(mood)}
             />
+          ) : (
+            <div key={mood.id} className="absolute inset-0 rounded-2xl bg-gray-200 card-shadow"
+              style={{ transform: `scale(${0.95 - (total - 1 - i) * 0.03}) translateY(${(total - 1 - i) * 10}px)` }} />
           )
         })}
       </div>
 
       <div className="flex justify-center items-center gap-4 pb-2">
-        {/* Tilbage */}
-        <button
-          onClick={handleUndo}
-          disabled={history.length === 0}
-          className="w-12 h-12 rounded-full bg-white shadow-md flex items-center justify-center border border-gray-100 disabled:opacity-30"
-        >
+        <button onClick={handleUndo} disabled={history.length === 0}
+          className="w-12 h-12 rounded-full bg-white shadow-md flex items-center justify-center border border-gray-100 disabled:opacity-30">
           <Undo2 size={20} className="text-yellow-500" />
         </button>
-
-        {/* Nej */}
-        <button
-          onClick={() => handleSwipe(false)}
-          className="w-16 h-16 rounded-full bg-white shadow-lg flex items-center justify-center border border-gray-100"
-        >
+        <button onClick={() => handleSwipe(false)}
+          className="w-16 h-16 rounded-full bg-white shadow-lg flex items-center justify-center border border-gray-100">
           <X size={28} className="text-gray-400" />
         </button>
-
-        {/* Ja */}
-        <button
-          onClick={() => handleSwipe(true)}
-          className="w-16 h-16 rounded-full bg-white shadow-lg flex items-center justify-center border border-gray-100"
-        >
+        <button onClick={() => handleSwipe(true)}
+          className="w-16 h-16 rounded-full bg-white shadow-lg flex items-center justify-center border border-gray-100">
           <Heart size={28} className="text-primary" fill="#FF4458" />
         </button>
-
-        {/* Gå igennem igen */}
-        <button
-          onClick={handleReset}
-          className="w-12 h-12 rounded-full bg-white shadow-md flex items-center justify-center border border-gray-100"
-        >
+        <button onClick={handleReset}
+          className="w-12 h-12 rounded-full bg-white shadow-md flex items-center justify-center border border-gray-100">
           <RotateCcw size={20} className="text-blue-400" />
         </button>
       </div>
+
+      <AnimatePresence>
+        {viewingMood && (
+          <ProfileSheet
+            mood={viewingMood}
+            onClose={() => setViewingMood(null)}
+            onSwipe={handleSwipe}
+          />
+        )}
+      </AnimatePresence>
     </div>
   )
 }
