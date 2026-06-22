@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, useMotionValue, useTransform, PanInfo, AnimatePresence } from 'framer-motion'
-import { Heart, X, ChevronLeft, ChevronRight, RotateCcw, Undo2, ChevronDown } from 'lucide-react'
+import { Heart, X, ChevronLeft, ChevronRight, RotateCcw, Undo2 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 
@@ -84,22 +84,21 @@ function ProfileSheet({ mood, onClose, onSwipe }: {
             </>
           )}
 
-          {/* Close pill */}
-          <button onClick={onClose}
-            className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur-sm rounded-full px-4 py-1.5 flex items-center gap-1 shadow-md">
-            <ChevronDown size={16} className="text-gray-600" />
-            <span className="text-xs font-semibold text-gray-700">Luk</span>
-          </button>
+          </div>
+
+        {/* Drag handle */}
+        <div className="flex-shrink-0 flex justify-center pt-3 pb-1">
+          <div className="w-10 h-1 bg-gray-200 rounded-full" />
         </div>
 
         {/* Scrollable content */}
         <div className="flex-1 overflow-y-auto">
-          <div className="p-5 space-y-4">
+          <div className="px-5 pb-4 space-y-4">
             {/* Name + tags */}
             <div>
               <h2 className="text-2xl font-bold text-gray-900">{mood.name}</h2>
               {mood.tags?.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 mt-2">
+                <div className="flex flex-wrap gap-1.5 mt-2 overflow-hidden" style={{ maxHeight: '4rem' }}>
                   {mood.tags.map(tag => (
                     <span key={tag} className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium">{tag}</span>
                   ))}
@@ -121,24 +120,6 @@ function ProfileSheet({ mood, onClose, onSwipe }: {
                 <p className="text-lg font-bold text-gray-900 leading-snug">{p.answer}</p>
               </div>
             ))}
-
-            {/* Extra photos */}
-            {images.length > 1 && (
-              <div>
-                <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">Billeder</p>
-                <div className="grid grid-cols-3 gap-1.5">
-                  {images.map((img, i) => (
-                    <button key={i} onClick={() => setImgIndex(i)}
-                      className={`aspect-square rounded-xl overflow-hidden ring-2 transition-all ${i === imgIndex ? 'ring-primary' : 'ring-transparent'}`}>
-                      <img src={img.url} className="w-full h-full object-cover" alt="" />
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Bottom padding for buttons */}
-            <div className="h-4" />
           </div>
         </div>
 
