@@ -213,9 +213,9 @@ function MoodCard({ mood, onSwipe, onTap }: {
       onClick={handleClick}
       className="absolute inset-0 cursor-grab active:cursor-grabbing select-none"
     >
-      <div className="relative w-full h-full rounded-2xl overflow-hidden card-shadow bg-gray-200">
+      <div className="relative w-full h-full rounded-2xl overflow-hidden card-shadow bg-black">
         {images.length > 0 ? (
-          <img src={images[imgIndex]?.url} className="w-full h-full object-cover object-top" draggable={false} alt={mood.name} />
+          <img src={images[imgIndex]?.url} className="w-full h-full object-contain" draggable={false} alt={mood.name} />
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-pink-400 to-red-500 flex items-center justify-center">
             <span className="text-white text-6xl font-bold">{mood.name[0]}</span>
@@ -379,7 +379,7 @@ export default function SwipePage() {
   }
 
   return (
-    <div className="h-full flex flex-col" style={{ padding: '6px 8px 8px' }}>
+    <div className="h-full flex flex-col overflow-x-hidden" style={{ padding: '6px 8px 8px' }}>
       {matched && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-pink-500 to-red-500">
           <div className="text-center text-white">
