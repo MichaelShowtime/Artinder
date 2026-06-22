@@ -23,7 +23,7 @@ export default function OnboardingPage() {
   const { user, refreshProfile } = useAuth()
   const navigate = useNavigate()
   const [step, setStep] = useState<Step>('name')
-  const [name, setName] = useState('')
+  const [name, setName] = useState(user?.user_metadata?.name || '')
   const [age, setAge] = useState('')
   const [height, setHeight] = useState('')
   const [gender, setGender] = useState('')
@@ -133,7 +133,7 @@ export default function OnboardingPage() {
         <div className="flex-1 flex flex-col overflow-y-auto">
           <h2 className="text-2xl font-bold mb-2">Hvad er dit køn?</h2>
           <div className="space-y-3 mt-6">
-            {['Mand', 'Kvinde', 'Andet'].map(g => (
+            {['Mand', 'Kvinde'].map(g => (
               <button key={g} onClick={() => setGender(g)}
                 className={`w-full border rounded-xl px-4 py-3 text-sm text-left transition-all ${gender === g ? 'border-primary bg-red-50 text-primary font-semibold' : 'border-gray-200'}`}>
                 {g}

@@ -1,22 +1,22 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import { Eye, EyeOff } from 'lucide-react'
+import { Eye, EyeOff, Mail } from 'lucide-react'
 
 export default function RegisterPage() {
-  const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [name, setName] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [confirmationSent, setConfirmationSent] = useState(false)
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError('')
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: { data: { name } },
@@ -24,9 +24,32 @@ export default function RegisterPage() {
     if (error) {
       setError(error.message)
       setLoading(false)
-    } else {
-      navigate('/onboarding')
+    } else if (!data.session) {
+      // Supabase kræver email-bekræftelse
+      setConfirmationSent(true)
+      setLoading(false)
     }
+    // Hvis session oprettes med det samme, opdaterer AuthContext og App.tsx redirecter automatisk
+  }
+
+  if (confirmationSent) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-white px-6">
+        <div className="w-full max-w-sm text-center">
+          <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Mail size={28} className="text-primary" />
+          </div>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">Tjek din email</h2>
+          <p className="text-gray-500 text-sm mb-6">
+            Vi har sendt en bekræftelsesmail til <span className="font-semibold text-gray-800">{email}</span>.
+            Klik på linket i mailen for at aktivere din konto.
+          </p>
+          <Link to="/login" className="text-primary font-semibold text-sm">
+            Tilbage til login
+          </Link>
+        </div>
+      </div>
+    )
   }
 
   return (
