@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { AnimatePresence } from 'framer-motion'
 import { supabase } from '../lib/supabase'
-import { ArrowLeft, Upload, X, Plus, ChevronDown, ChevronUp } from 'lucide-react'
+import { ArrowLeft, Upload, X, Plus, ChevronDown, ChevronUp, Eye } from 'lucide-react'
 import type { ProfilePrompt } from '../context/AuthContext'
 import InterestPicker from '../components/InterestPicker'
+import ProfileSheet from '../components/ProfileSheet'
 
 type MoodImage = { id: string; url: string; order_index: number }
 
@@ -54,6 +56,7 @@ export default function EditMoodPage() {
   const [error, setError] = useState('')
   const [promptSelectSlot, setPromptSelectSlot] = useState<number | null>(null)
   const [tagsOpen, setTagsOpen] = useState(false)
+  const [previewOpen, setPreviewOpen] = useState(false)
 
   useEffect(() => {
     if (!moodId) return
@@ -135,7 +138,10 @@ export default function EditMoodPage() {
     <div className="h-full overflow-y-auto">
       <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-100">
         <button onClick={() => navigate(-1)}><ArrowLeft size={22} className="text-gray-600" /></button>
-        <h2 className="font-bold text-lg">Rediger persona</h2>
+        <h2 className="font-bold text-lg flex-1">Rediger persona</h2>
+        <button onClick={() => setPreviewOpen(true)} className="flex items-center gap-1.5 text-sm font-medium text-primary">
+          <Eye size={18} /> Preview
+        </button>
       </div>
       <div className="p-4 space-y-5">
         <div>
@@ -219,6 +225,24 @@ export default function EditMoodPage() {
           {saving ? 'Gemmer...' : 'Gem ændringer'}
         </button>
       </div>
+
+      {/* Preview sheet */}
+      <AnimatePresence>
+        {previewOpen && (
+          <ProfileSheet
+            mood={{
+              id: moodId ?? '',
+              name: name || 'Persona',
+              description: description || null,
+              tags,
+              prompts,
+              mood_images: existingImages,
+            }}
+            onClose={() => setPreviewOpen(false)}
+            readOnly
+          />
+        )}
+      </AnimatePresence>
 
       {/* Prompt select modal */}
       {promptSelectSlot !== null && (
