@@ -379,7 +379,7 @@ export default function SwipePage() {
   }
 
   return (
-    <div className="h-full flex flex-col p-4">
+    <div className="h-full flex flex-col" style={{ padding: '6px 8px 8px' }}>
       {matched && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-pink-500 to-red-500">
           <div className="text-center text-white">
@@ -390,7 +390,7 @@ export default function SwipePage() {
         </div>
       )}
 
-      <div className="relative flex-1 mb-4">
+      <div className="relative flex-1 mb-2">
         {remaining.slice(0, 3).reverse().map((mood, i) => {
           const total = Math.min(remaining.length, 3)
           const isTop = i === total - 1
@@ -408,22 +408,22 @@ export default function SwipePage() {
         })}
       </div>
 
-      <div className="flex justify-center items-center gap-4 pb-2">
+      <div className="flex justify-center items-center gap-3 py-1">
         <button onClick={handleUndo} disabled={history.length === 0}
-          className="w-12 h-12 rounded-full bg-white shadow-md flex items-center justify-center border border-gray-100 disabled:opacity-30">
-          <Undo2 size={20} className="text-yellow-500" />
+          className="w-11 h-11 rounded-full bg-white shadow-md flex items-center justify-center border border-gray-100 disabled:opacity-30">
+          <Undo2 size={18} className="text-yellow-500" />
         </button>
         <button onClick={() => handleSwipe(false)}
-          className="w-16 h-16 rounded-full bg-white shadow-lg flex items-center justify-center border border-gray-100">
-          <X size={28} className="text-gray-400" />
+          className="w-14 h-14 rounded-full bg-white shadow-lg flex items-center justify-center border border-gray-100">
+          <X size={26} className="text-gray-400" />
         </button>
         <button onClick={() => handleSwipe(true)}
-          className="w-16 h-16 rounded-full bg-white shadow-lg flex items-center justify-center border border-gray-100">
-          <Heart size={28} className="text-primary" fill="#FF4458" />
+          className="w-14 h-14 rounded-full bg-white shadow-lg flex items-center justify-center border border-gray-100">
+          <Heart size={26} className="text-primary" fill="#FF4458" />
         </button>
         <button onClick={handleReset}
-          className="w-12 h-12 rounded-full bg-white shadow-md flex items-center justify-center border border-gray-100">
-          <RotateCcw size={20} className="text-blue-400" />
+          className="w-11 h-11 rounded-full bg-white shadow-md flex items-center justify-center border border-gray-100">
+          <RotateCcw size={18} className="text-blue-400" />
         </button>
       </div>
 
