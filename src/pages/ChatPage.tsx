@@ -84,8 +84,9 @@ export default function ChatPage() {
     const loadReactions = async () => {
       const { data } = await supabase
         .from('message_reactions')
-        .select('message_id, user_id, emoji')
-      setReactions(data || [])
+        .select('message_id, user_id, emoji, messages!inner(match_id)')
+        .eq('messages.match_id', matchId)
+      setReactions((data || []).map(r => ({ message_id: r.message_id, user_id: r.user_id, emoji: r.emoji })))
     }
 
     const loadUserLastRead = async () => {
@@ -202,11 +203,15 @@ export default function ChatPage() {
 
   const addReaction = async (messageId: string, emoji: string) => {
     if (!user) return
+    setReactions(prev => {
+      const without = prev.filter(r => !(r.message_id === messageId && r.user_id === user.id))
+      return [...without, { message_id: messageId, user_id: user.id, emoji }]
+    })
+    setTappedId(null)
     await supabase.from('message_reactions').upsert(
       { message_id: messageId, user_id: user.id, emoji },
       { onConflict: 'message_id,user_id' }
     )
-    setTappedId(null)
   }
 
   const getReactions = (messageId: string) =>
