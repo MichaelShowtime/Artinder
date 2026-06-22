@@ -50,8 +50,6 @@ export default function CreateMoodPage() {
   const [error, setError] = useState('')
   const [promptSelectSlot, setPromptSelectSlot] = useState<number | null>(null)
 
-  const toggleTag = (tag: string) =>
-    setTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag])
 
   const handlePhotos = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
