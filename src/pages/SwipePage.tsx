@@ -188,7 +188,7 @@ function MoodCard({ mood, onSwipe, onTap }: {
     >
       <div className="relative w-full h-full rounded-2xl overflow-hidden card-shadow bg-gray-200">
         {images.length > 0 ? (
-          <img src={images[imgIndex]?.url} className="w-full h-full object-cover" draggable={false} alt={mood.name} />
+          <img src={images[imgIndex]?.url} className="w-full h-full object-cover object-top" draggable={false} alt={mood.name} />
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-pink-400 to-red-500 flex items-center justify-center">
             <span className="text-white text-6xl font-bold">{mood.name[0]}</span>
