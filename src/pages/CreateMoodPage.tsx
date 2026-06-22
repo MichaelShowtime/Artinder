@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import { ArrowLeft, Upload, X, Plus } from 'lucide-react'
+import { ArrowLeft, Upload, X, Plus, ChevronDown, ChevronUp } from 'lucide-react'
 import type { ProfilePrompt } from '../context/AuthContext'
 import MoodTagPicker from '../components/MoodTagPicker'
 
@@ -49,6 +49,7 @@ export default function CreateMoodPage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [promptSelectSlot, setPromptSelectSlot] = useState<number | null>(null)
+  const [tagsOpen, setTagsOpen] = useState(false)
 
 
   const handlePhotos = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -130,8 +131,17 @@ export default function CreateMoodPage() {
         </div>
 
         <div>
-          <label className="text-sm font-semibold text-gray-700 mb-3 block">Tags</label>
-          <MoodTagPicker value={tags} onChange={setTags} />
+          <button
+            type="button"
+            onClick={() => setTagsOpen(v => !v)}
+            className="w-full flex items-center justify-between py-1 mb-1"
+          >
+            <span className="text-sm font-semibold text-gray-700">
+              Tags{tags.length > 0 ? ` (${tags.length} valgt)` : ''}
+            </span>
+            {tagsOpen ? <ChevronUp size={16} className="text-gray-400" /> : <ChevronDown size={16} className="text-gray-400" />}
+          </button>
+          {tagsOpen && <MoodTagPicker value={tags} onChange={setTags} />}
         </div>
 
         <div>
