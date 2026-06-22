@@ -36,9 +36,9 @@ function ProfileSheet({ mood, onClose, onSwipe }: {
     return () => { document.body.style.overflow = '' }
   }, [])
 
-  const handlePan = (_: unknown, info: PanInfo) => {
-    if (info.offset.y > 40) setImageExpanded(true)
-    else if (info.offset.y < -40) setImageExpanded(false)
+  const handlePanEnd = (_: unknown, info: PanInfo) => {
+    if (info.offset.y > 30) setImageExpanded(true)
+    else if (info.offset.y < -30) setImageExpanded(false)
   }
 
   const IMAGE_COLLAPSED = 280
@@ -103,7 +103,7 @@ function ProfileSheet({ mood, onClose, onSwipe }: {
         {/* Drag handle — træk ned for billede, op for info */}
         <motion.div
           className="flex-shrink-0 flex justify-center items-center py-3 cursor-grab active:cursor-grabbing touch-none"
-          onPan={handlePan}
+          onPanEnd={handlePanEnd}
           onTap={() => setImageExpanded(v => !v)}
         >
           <motion.div
