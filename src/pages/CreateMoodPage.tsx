@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { ArrowLeft, Upload, X, Plus, ChevronDown, ChevronUp } from 'lucide-react'
 import type { ProfilePrompt } from '../context/AuthContext'
-import MoodTagPicker from '../components/MoodTagPicker'
+import InterestPicker from '../components/InterestPicker'
 
 const PROMPTS = [
   'Perks of dating me:',
@@ -141,7 +141,7 @@ export default function CreateMoodPage() {
             </span>
             {tagsOpen ? <ChevronUp size={16} className="text-gray-400" /> : <ChevronDown size={16} className="text-gray-400" />}
           </button>
-          {tagsOpen && <MoodTagPicker value={tags} onChange={setTags} />}
+          {tagsOpen && <InterestPicker value={tags} onChange={setTags} max={30} />}
         </div>
 
         <div>
