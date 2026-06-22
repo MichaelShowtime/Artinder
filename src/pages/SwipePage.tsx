@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, useMotionValue, useTransform, PanInfo, AnimatePresence } from 'framer-motion'
-import { Heart, X, ChevronLeft, ChevronRight, RotateCcw, Undo2 } from 'lucide-react'
+import { Heart, X, RotateCcw, Undo2 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 
@@ -22,12 +22,13 @@ type HistoryItem = {
 }
 
 // --- Profile sheet shown when tapping the card ---
-function ProfileSheet({ mood, onClose, onSwipe }: {
+function ProfileSheet({ mood, onClose, onSwipe, startIndex = 0 }: {
   mood: Mood
   onClose: () => void
   onSwipe: (liked: boolean) => void
+  startIndex?: number
 }) {
-  const [imgIndex, setImgIndex] = useState(0)
+  const [imgIndex, setImgIndex] = useState(startIndex)
   const [imageExpanded, setImageExpanded] = useState(false)
   const images = [...mood.mood_images].sort((a, b) => a.order_index - b.order_index)
 
@@ -78,26 +79,19 @@ function ProfileSheet({ mood, onClose, onSwipe }: {
             </div>
           )}
 
+          {/* Progress bar */}
           {images.length > 1 && (
-            <div className="absolute top-3 left-0 right-0 flex gap-1 px-4">
+            <div className="absolute top-3 left-0 right-0 flex gap-1 px-4 pointer-events-none">
               {images.map((_, i) => (
-                <button key={i} onClick={() => setImgIndex(i)}
-                  className={`flex-1 h-1 rounded-full transition-all ${i === imgIndex ? 'bg-white' : 'bg-white/40'}`} />
+                <div key={i} className={`flex-1 h-1 rounded-full transition-all ${i === imgIndex ? 'bg-white' : 'bg-white/40'}`} />
               ))}
             </div>
           )}
-          {images.length > 1 && (
-            <>
-              <button onClick={() => setImgIndex(i => Math.max(0, i - 1))}
-                className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center">
-                <ChevronLeft size={22} className="text-white drop-shadow" />
-              </button>
-              <button onClick={() => setImgIndex(i => Math.min(images.length - 1, i + 1))}
-                className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center">
-                <ChevronRight size={22} className="text-white drop-shadow" />
-              </button>
-            </>
-          )}
+          {/* Tap zones — venstre = forrige, højre = næste */}
+          <div className="absolute inset-0 flex">
+            <div className="flex-1" onClick={() => setImgIndex(i => Math.max(0, i - 1))} />
+            <div className="flex-1" onClick={() => setImgIndex(i => Math.min(images.length - 1, i + 1))} />
+          </div>
         </motion.div>
 
         {/* Drag handle — træk ned for billede, op for info */}
@@ -172,7 +166,7 @@ function ProfileSheet({ mood, onClose, onSwipe }: {
 function MoodCard({ mood, onSwipe, onTap }: {
   mood: Mood
   onSwipe: (liked: boolean) => void
-  onTap: () => void
+  onTap: (startIndex: number) => void
 }) {
   const [imgIndex, setImgIndex] = useState(0)
   const x = useMotionValue(0)
@@ -192,7 +186,21 @@ function MoodCard({ mood, onSwipe, onTap }: {
     if (info.offset.x > 120) onSwipe(true)
     else if (info.offset.x < -120) onSwipe(false)
   }
-  const handleClick = () => { if (!draggedRef.current) onTap() }
+
+  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (draggedRef.current) return
+    const rect = e.currentTarget.getBoundingClientRect()
+    const isLeft = e.clientX < rect.left + rect.width / 2
+    if (isLeft) {
+      setImgIndex(i => Math.max(0, i - 1))
+    } else {
+      if (imgIndex < images.length - 1) {
+        setImgIndex(i => i + 1)
+      } else {
+        onTap(imgIndex)
+      }
+    }
+  }
 
   return (
     <motion.div
@@ -228,18 +236,6 @@ function MoodCard({ mood, onSwipe, onTap }: {
             ))}
           </div>
         )}
-        {images.length > 1 && (
-          <>
-            <button onClick={e => { e.stopPropagation(); setImgIndex(i => Math.max(0, i - 1)) }}
-              className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center">
-              <ChevronLeft size={20} className="text-white drop-shadow" />
-            </button>
-            <button onClick={e => { e.stopPropagation(); setImgIndex(i => Math.min(images.length - 1, i + 1)) }}
-              className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center">
-              <ChevronRight size={20} className="text-white drop-shadow" />
-            </button>
-          </>
-        )}
 
         <div className="absolute bottom-0 left-0 right-0 p-5 bg-gradient-to-t from-black/70 to-transparent">
           <h2 className="text-white text-xl font-bold">{mood.name}</h2>
@@ -251,8 +247,6 @@ function MoodCard({ mood, onSwipe, onTap }: {
               ))}
             </div>
           )}
-          {/* Tap hint */}
-          <p className="text-white/50 text-xs mt-2">Tryk for at se profil</p>
         </div>
       </div>
     </motion.div>
@@ -267,7 +261,7 @@ export default function SwipePage() {
   const [history, setHistory] = useState<HistoryItem[]>([])
   const [loading, setLoading] = useState(true)
   const [matched, setMatched] = useState(false)
-  const [viewingMood, setViewingMood] = useState<Mood | null>(null)
+  const [viewingMood, setViewingMood] = useState<{ mood: Mood; startIndex: number } | null>(null)
   const processingRef = useRef(false)
 
   const loadMoods = async (userId: string, includeNoSwipes = false) => {
@@ -405,7 +399,7 @@ export default function SwipePage() {
               key={mood.id}
               mood={mood}
               onSwipe={handleSwipe}
-              onTap={() => setViewingMood(mood)}
+              onTap={(startIndex) => setViewingMood({ mood, startIndex })}
             />
           ) : (
             <div key={mood.id} className="absolute inset-0 rounded-2xl bg-gray-200 card-shadow"
@@ -436,7 +430,8 @@ export default function SwipePage() {
       <AnimatePresence>
         {viewingMood && (
           <ProfileSheet
-            mood={viewingMood}
+            mood={viewingMood.mood}
+            startIndex={viewingMood.startIndex}
             onClose={() => setViewingMood(null)}
             onSwipe={handleSwipe}
           />
