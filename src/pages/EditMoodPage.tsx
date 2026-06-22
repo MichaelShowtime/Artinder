@@ -3,10 +3,9 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { ArrowLeft, Upload, X, Plus } from 'lucide-react'
 import type { ProfilePrompt } from '../context/AuthContext'
+import MoodTagPicker from '../components/MoodTagPicker'
 
 type MoodImage = { id: string; url: string; order_index: number }
-
-const TAGS = ['Romantisk', 'Sjov', 'Mystisk', 'Sporty', 'Afslappet', 'Intens', 'Kreativ', 'Eventyrlysten', 'Seriøs', 'Legesyg', 'Vild', 'Chill']
 
 const PROMPTS = [
   'Perks of dating me:',
@@ -153,23 +152,8 @@ export default function EditMoodPage() {
         </div>
 
         <div>
-          <label className="text-sm font-semibold text-gray-700 mb-2 block">Tags</label>
-          <div className="flex flex-wrap gap-2">
-            {TAGS.map(tag => (
-              <button
-                key={tag}
-                type="button"
-                onClick={() => toggleTag(tag)}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all border-2 ${
-                  tags.includes(tag)
-                    ? 'bg-white text-gray-900 border-gray-900'
-                    : 'bg-gray-900 text-white border-gray-900'
-                }`}
-              >
-                {tag}
-              </button>
-            ))}
-          </div>
+          <label className="text-sm font-semibold text-gray-700 mb-3 block">Tags</label>
+          <MoodTagPicker value={tags} onChange={setTags} />
         </div>
 
         <div>
